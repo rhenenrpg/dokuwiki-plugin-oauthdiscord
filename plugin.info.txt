@@ -1,0 +1,7 @@
+base   oauthdiscord
+author Martijn Sanders
+email  m.e.sanders@alumnus.utwente.nl
+date   2022-03-02
+name   oauth Discord Service
+desc   Discord Service for use with the oAuth Plugin
+url    http://www.dokuwiki.org/plugin:oauthdiscord
