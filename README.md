@@ -23,7 +23,8 @@ on how to install plugins in DokuWiki.
 
 ----
 Copyright (C) Martijn Sanders
-Based on oauthgeneric Copyright (C) Andreas Gohr <dokuwiki@cosmocode.de>
+
+based on oauthgeneric Copyright (C) Andreas Gohr <dokuwiki@cosmocode.de>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
