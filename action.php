@@ -17,13 +17,19 @@ class action_plugin_oauthdiscord extends Adapter
 
     public function loadDiscordMap()
     {
+         /** TODO: map should be externalized */
+         /** each row is a rule that is applied in order, available keys determine the semantics.
+             guildid + grps: assign grps to each member of this guild
+             guildid + roleid + grps: assign grps to each member of this guild that has role roleid
+             userid + grps: assign grps to discord user 
+             grps: grps that are only assigned when none of the above rules match
+           */
          return [
-             ['guildid' => '543792382190288907', 'grps' => [ 'dutch20'] ],
-             ['guildid' => '543792382190288907', 'roleid' => '624624788266156033', 'grps' => ['ff', 'xvtt'] ],
-             ['guildid' => '543792382190288907', 'roleid' => '625656026271842304', 'grps' => ['xvtt', 'xvtttest'] ],
-             ['guildid' => '557100832521453579', 'grps' => ['zeberron', 'xvtt'] ],
-             ['grps' => ['noaccess'] ]
-         ];
+             ['guildid' => '<discord id of guild>', 'grps' => [ 'myguild'] ],
+             ['guildid' => '<discord id of guild>', 'roleid' => '<discord id of role>', 'grps' => ['extrarole1', 'extrarole2'] ],
+             ['userid' => '<discord id of user>', 'grps' => ['extrarole1','extrarole3'] ],
+             ['grps' => ['noaccess'] ] 
+          ];
     }
 
     /** * @inheritDoc */
@@ -53,9 +59,8 @@ class action_plugin_oauthdiscord extends Adapter
         $guilds = NULL;
         $guildmembers = [];
         foreach($dmap as $dr) {
-            dbglog('dr and grps');
-            dbglog($dr);
-            dbglog($grps);
+            dbglog('grps '); dbglog($grps);
+            dbglog('dr'); dbglog($dr);
             if( isset($dr['guildid']) ) {
                 if( is_null($guilds) ) { /* only retrieve guilds if needed */
                     $userguildsurl = 'https://discord.com/api/users/@me/guilds';
@@ -74,22 +79,33 @@ class action_plugin_oauthdiscord extends Adapter
                             }
                             $member = $guildmembers[$dr['guildid']];
                             if( in_array($dr['roleid'], $member->roles) and isset($dr['grps']) ) { 
-                                dbglog('adding to grps due to role'); dbglog($dr['grps']);
+                                dbglog('case role: adding to grps'); dbglog($dr['grps']);
                                 $grps = array_merge($grps, $dr['grps']);
                             } else {
                                 dbglog('NOT adding to grps ');
                             }
                         } elseif (isset($dr['grps']) ) { 
-                            dbglog('adding to grps due to guild'); dbglog($dr['grps']);
+                            dbglog('case guild: adding to grps'); dbglog($dr['grps']);
                             $grps = array_merge($grps, $dr['grps']);
                         }
                     }
                 }
-            } elseif (isset($dr['grps']) and count($grps) == 0) { /* Note the count == 0 */
-                dbglog('adding to grps '); dbglog($dr['grps']);
-                $grps = $dr['grps'];
+            } elseif (isset($dr['userid'])) {
+                if($result['id'] == $dr['userid'] and isset($dr['grps'])) { 
+                    dbglog('case userid: adding to grps '); dbglog($dr['grps']);
+                    $grps = array_merge($grps, $dr['grps']);
+                } else {
+                    dbglog('case userid: skip');
+                }
+            } elseif (isset($dr['grps'])) {
+                if(count($grps) == 0) { /* Note the count == 0 */
+                    dbglog('case other: adding to grps '); dbglog($dr['grps']);
+                    $grps = $dr['grps'];
+                } else {
+                    dbglog('case other: skip');
+               }
             } else {
-                dbglog('skip');
+                dbglog('case unknown configuration format: skip');
             }
         }
         $grps = array_unique($grps);
